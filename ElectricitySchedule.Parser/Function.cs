@@ -14,6 +14,7 @@ public class Function
 
     public async Task FunctionHandler(ILambdaContext context)
     {
+        context.Logger.LogInformation($"Invoked at {DateTime.UtcNow}");
         var address = Environment.GetEnvironmentVariable("SCHEDULE_WEB_PAGE");
         if (string.IsNullOrWhiteSpace(address))
         {

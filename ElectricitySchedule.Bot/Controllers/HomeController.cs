@@ -9,11 +9,10 @@ namespace ElectricitySchedule.Bot.Controllers;
 
 [ApiController]
 [Route("")]
-public class BotController(
+public class HomeController(
     IUpdateService updateService,
     ITelegramService telegramService) : ControllerBase
 {
-    // TODO: logging
     private readonly IUpdateService _updateService = updateService;
     private readonly ITelegramService _telegramService = telegramService;
 

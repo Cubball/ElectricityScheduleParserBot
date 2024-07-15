@@ -19,6 +19,7 @@ builder.Services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(telegram
 
 builder.Services.AddScoped<IUpdateService, UpdateService>();
 builder.Services.AddScoped<ITelegramService, TelegramService>();
+builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 

@@ -34,7 +34,7 @@ namespace ElectricitySchedule.Bot.Migrations
                 {
                     TelegramId = table.Column<long>(type: "bigint", nullable: false),
                     QueueNumber = table.Column<int>(type: "integer", nullable: true),
-                    LastReceivedUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    LastReceivedUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -6,5 +6,5 @@ internal class SubscribedUser
 
     public int? QueueNumber { get; set; }
 
-    public DateTime? LastReceivedUpdate { get; set; }
+    public DateTime LastReceivedUpdate { get; set; }
 }

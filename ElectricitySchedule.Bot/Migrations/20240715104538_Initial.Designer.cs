@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ElectricitySchedule.Bot.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240714182543_Initial")]
+    [Migration("20240715104538_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -56,7 +56,7 @@ namespace ElectricitySchedule.Bot.Migrations
                     b.Property<long>("TelegramId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTime?>("LastReceivedUpdate")
+                    b.Property<DateTime>("LastReceivedUpdate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("QueueNumber")

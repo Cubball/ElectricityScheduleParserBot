@@ -53,7 +53,7 @@ namespace ElectricitySchedule.Bot.Migrations
                     b.Property<long>("TelegramId")
                         .HasColumnType("bigint");
 
-                    b.Property<DateTime?>("LastReceivedUpdate")
+                    b.Property<DateTime>("LastReceivedUpdate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("QueueNumber")
