@@ -102,6 +102,14 @@ internal class TelegramService(
     private async Task HandleStartCommand(long userId)
     {
         _logger.LogInformation("User with Id {userId} requested to start receiving updates", userId);
+        var existingUser = await _dbContext.SubscribedUsers.FirstOrDefaultAsync(u => u.TelegramId == userId);
+        if (existingUser is not null)
+        {
+            _logger.LogInformation("User with Id {userId} is already in the database", userId);
+            await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), "Ви вже отримуєте оновлення графіка відключень");
+            return;
+        }
+
         var queues = await _dbContext.Queues.ToListAsync();
         var user = new SubscribedUser
         {
