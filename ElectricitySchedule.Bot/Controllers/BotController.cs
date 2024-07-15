@@ -1,5 +1,6 @@
-using ElectricitySchedule.Bot.Models;
+using ElectricitySchedule.Bot.Mapping;
 using ElectricitySchedule.Bot.Services;
+using ElectricitySchedule.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -17,9 +18,9 @@ public class BotController(
     private readonly ITelegramService _telegramService = telegramService;
 
     [HttpPost("update")]
-    public async Task<IActionResult> Update(ScheduleModel schedule)
+    public async Task<IActionResult> Update(SchedulePayload schedule)
     {
-        var updated = await _updateService.UpdateScheduleAsync(schedule);
+        var updated = await _updateService.UpdateScheduleAsync(schedule.ToModel());
         if (updated)
         {
             await _telegramService.NotifyAboutUpdatesAsync();

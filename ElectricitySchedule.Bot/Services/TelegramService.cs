@@ -46,6 +46,7 @@ internal class TelegramService(ApplicationDbContext dbContext, ITelegramBotClien
         var tasks = new List<Task>();
         foreach (var user in users)
         {
+            // TODO: notify only about changed schedules
             var usersQueues = user.QueueNumber is null
                 ? queues
                 : queues.Where(q => q.Number == user.QueueNumber).ToList();
@@ -69,6 +70,7 @@ internal class TelegramService(ApplicationDbContext dbContext, ITelegramBotClien
         {
             stringBuilder.Append('\n');
             stringBuilder.Append(queue.Date.ToString(DateFormat, CultureInfo.InvariantCulture));
+            stringBuilder.Append('\n');
             stringBuilder.Append('\n');
             stringBuilder.Append(queue.DisconnectionTimes.Replace(DisconnectionTimesSeparator, '\n'));
             stringBuilder.Append('\n');
