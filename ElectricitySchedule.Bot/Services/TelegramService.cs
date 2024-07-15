@@ -119,7 +119,7 @@ internal class TelegramService(
             return;
         }
 
-        await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), $"Тепер ви будете отримувати оновлення графіка відключень!. Щоб змінити номер черги, скористайтеся командою /queue, щоб припинити отримувати оновлення, скористайтеся командою /stop");
+        await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), $"Тепер ви будете отримувати оновлення графіка відключень! Щоб змінити номер черги, скористайтеся командою \"/queue <номер черги>\" (наприклад \"/queue 3\"), щоб припинити отримувати оновлення, скористайтеся командою /stop");
         await SendUpdatedScheduleToUser(user, queues);
     }
 
@@ -130,7 +130,7 @@ internal class TelegramService(
         if (!parsed || queueNumber < 0 || queueNumber > QueuesCount)
         {
             _logger.LogInformation("User with Id {userId} sent a wrong queue number: {QueueNumberText}", userId, text);
-            await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), $"Номер черги має бути числом від 0 до {QueuesCount}");
+            await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), $"Номер черги має бути числом від 0 до {QueuesCount} (0 - щоб отримувати оновлення всіх черг)");
             return;
         }
 
