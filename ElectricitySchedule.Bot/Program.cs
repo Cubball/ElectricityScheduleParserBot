@@ -11,7 +11,7 @@ builder.Services
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection should be provided");
-builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseSqlServer(connectionString));
 
 var telegramToken = builder.Configuration["TelegramToken"]
     ?? throw new InvalidOperationException("TelegramToken should be provided");
