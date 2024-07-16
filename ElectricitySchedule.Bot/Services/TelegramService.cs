@@ -60,7 +60,12 @@ internal class TelegramService(
                 usersQueues = usersQueues.Where(q => q.Number == user.QueueNumber);
             }
 
-            tasks.Add(SendUpdatedScheduleToUser(user, usersQueues.ToList()));
+            var usersQueuesList = usersQueues.ToList();
+            if (usersQueuesList.Count > 0)
+            {
+                tasks.Add(SendUpdatedScheduleToUser(user, usersQueuesList));
+                user.LastReceivedUpdate = _dateTimeProvider.UtcNow;
+            }
         }
 
         try
@@ -78,11 +83,6 @@ internal class TelegramService(
 
     private Task SendUpdatedScheduleToUser(SubscribedUser user, List<Queue> usersQueues)
     {
-        if (usersQueues.Count == 0)
-        {
-            return Task.CompletedTask;
-        }
-
         usersQueues.Sort((a, b) =>
         {
             var result = a.Date.CompareTo(b.Date);
@@ -90,7 +90,7 @@ internal class TelegramService(
         });
         var messageText = GetMessageFromQueues(usersQueues);
         _logger.LogInformation(
-            "Sending an update regarding {UpdatedQueuesCount} to the user with Id {UserId}",
+            "Sending an update regarding {UpdatedQueuesCount} queues to the user with Id {UserId}",
             usersQueues.Count,
             user.TelegramId);
         return _telegramBotClient.SendTextMessageAsync(
