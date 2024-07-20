@@ -19,7 +19,7 @@ internal class UpdateService(
         var queuesToDelete = new List<Queue>();
         foreach (var queue in queues)
         {
-            var newQueue = schedule.Queues.FirstOrDefault(q => q.Number == queue.Number && q.Date == queue.Date);
+            var newQueue = schedule.Queues.FirstOrDefault(q => q.Number == queue.Number && q.Date == DateOnly.FromDateTime(queue.Date));
             if (newQueue is null)
             {
                 queuesToDelete.Add(queue);
@@ -28,7 +28,7 @@ internal class UpdateService(
 
             if (queue.DisconnectionTimes != newQueue.DisconnectionTimes)
             {
-                _logger.LogInformation("Queue #{QueueNumber} on {QueueDate} has changes, updating...", queue.Number, queue.Date);
+                _logger.LogInformation("Queue #{QueueNumber} on {QueueDate} has changes, updating...", queue.Number, DateOnly.FromDateTime(queue.Date));
                 queue.DisconnectionTimes = newQueue.DisconnectionTimes;
                 queue.UpdatedAt = schedule.FetchedAt;
             }
@@ -43,7 +43,7 @@ internal class UpdateService(
         _dbContext.Queues.RemoveRange(queuesToDelete);
         _dbContext.Queues.AddRange(schedule.Queues.Select(q => new Queue
         {
-            Date = q.Date,
+            Date = q.Date.ToDateTime(new TimeOnly()),
             Number = q.Number,
             UpdatedAt = schedule.FetchedAt,
             DisconnectionTimes = q.DisconnectionTimes,

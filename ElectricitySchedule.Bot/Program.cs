@@ -9,9 +9,11 @@ builder.Services
     .AddControllers()
     .AddNewtonsoftJson();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection should be provided");
-builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseSqlServer(connectionString));
+var connectionString = builder.Configuration["MongoDbSettings:ConnectionString"]
+    ?? throw new InvalidOperationException("MongoDbSettings:ConnectionString should be provided");
+var databaseName = builder.Configuration["MongoDbSettings:DatabaseName"]
+    ?? throw new InvalidOperationException("MongoDbSettings:DatabaseName should be provided");
+builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseMongoDB(connectionString, databaseName));
 
 var telegramToken = builder.Configuration["TelegramToken"]
     ?? throw new InvalidOperationException("TelegramToken should be provided");

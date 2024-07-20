@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using ElectricitySchedule.Bot.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace ElectricitySchedule.Bot.Persistence;
 
@@ -14,6 +14,7 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
     {
         modelBuilder.Entity<SubscribedUser>()
             .Property(u => u.TelegramId)
+            .HasElementName("_id")
             .ValueGeneratedNever();
 
         modelBuilder.Entity<SubscribedUser>()
