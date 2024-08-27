@@ -11,35 +11,48 @@ public class Function
 {
     private const string DateFormat = "dd.MM.yyyy";
     private const char DisconnectionTimesSeparator = ';';
+    private const int HeaderTableRowsCount = 3;
 
     public async Task FunctionHandler(ILambdaContext context)
     {
-        context.Logger.LogInformation($"Invoked at {DateTime.UtcNow}");
+        try
+        {
+            await Handle(context);
+        }
+        catch (Exception e)
+        {
+            context.Logger.LogError(e.Message);
+        }
+    }
+
+    private static async Task Handle(ILambdaContext context)
+    {
         var address = Environment.GetEnvironmentVariable("SCHEDULE_WEB_PAGE");
         if (string.IsNullOrWhiteSpace(address))
         {
-            context.Logger.LogError("The address of a web page with the schedule is not provided. Make sure that the 'SCHEDULE_WEB_PAGE' environment variable is set");
-            return;
-        }
-
-        var htmlWeb = new HtmlWeb();
-        var htmlDocument = await htmlWeb.LoadFromWebAsync(address);
-        var schedule = GetScheduleFromHtmlDocument(htmlDocument, context.Logger);
-        if (schedule is null)
-        {
+            context.Logger.LogError("SCHEDULE_WEB_PAGE is not set");
             return;
         }
 
         var botLambdaEndpoint = Environment.GetEnvironmentVariable("BOT_LAMBDA_ENDPOINT");
         if (string.IsNullOrWhiteSpace(botLambdaEndpoint))
         {
-            context.Logger.LogError("The endpoint of a consumer lambda is not provided. Make sure that the 'BOT_LAMBDA_ENDPOINT' environment variable is set");
+            context.Logger.LogError("BOT_LAMBDA_ENDPOINT is not set");
             return;
         }
 
+        var htmlWeb = new HtmlWeb();
+        var htmlDocument = await htmlWeb.LoadFromWebAsync(address);
+        context.Logger.LogInformation("Loaded the web page");
+        var schedule = GetScheduleFromHtmlDocument(htmlDocument, context.Logger);
+        context.Logger.LogInformation("Parsed the web page");
+        if (schedule is null)
+        {
+            return;
+        }
         using var httpClient = new HttpClient();
         await httpClient.PostAsJsonAsync(botLambdaEndpoint, schedule);
-        context.Logger.LogInformation("Successfully parsed and sent the schedule");
+        context.Logger.LogInformation("Sent the schedule");
     }
 
     private static SchedulePayload? GetScheduleFromHtmlDocument(HtmlDocument htmlDocument, ILambdaLogger logger)
@@ -53,18 +66,20 @@ public class Function
 
         var trs = tbody.ChildNodes
             .Where(n => n.Name == "tr")
+            .Skip(HeaderTableRowsCount)
             .ToArray();
-        if (trs.Length < 2)
+        if (trs.Length == 0)
         {
-            logger.LogError($"Expected to get at least 2 table rows, but got {trs.Length}");
+            logger.LogError("The table does not contain rows with disconnection times");
             return null;
         }
 
-        var firstDay = trs[^2];
-        var secondDay = trs[^1];
         var queues = new List<QueuePayload>();
-        ParseScheduleFromTableRow(firstDay, queues, logger);
-        ParseScheduleFromTableRow(secondDay, queues, logger);
+        foreach (var tr in trs)
+        {
+            ParseScheduleFromTableRow(tr, queues, logger);
+        }
+
         var schedule = new SchedulePayload
         {
             Queues = queues,
