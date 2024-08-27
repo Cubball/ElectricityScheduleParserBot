@@ -1,8 +1,8 @@
 namespace ElectricitySchedule.Bot.Middleware;
 
-internal class ErrorHandlingMiddleware(Logger<ErrorHandlingMiddleware> logger) : IMiddleware
+internal class ErrorHandlingMiddleware(ILogger<ErrorHandlingMiddleware> logger) : IMiddleware
 {
-    private readonly Logger<ErrorHandlingMiddleware> _logger = logger;
+    private readonly ILogger<ErrorHandlingMiddleware> _logger = logger;
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
