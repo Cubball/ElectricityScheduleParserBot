@@ -68,6 +68,7 @@ internal class TelegramService(
             }
         }
 
+        await Task.WhenAll(tasks);
         try
         {
             await _dbContext.SaveChangesAsync();
@@ -77,8 +78,6 @@ internal class TelegramService(
             _logger.LogError(e, "Failed to update the database");
             return;
         }
-
-        await Task.WhenAll(tasks);
     }
 
     private Task SendUpdatedScheduleToUser(SubscribedUser user, List<Queue> usersQueues)
@@ -93,19 +92,16 @@ internal class TelegramService(
             "Sending an update regarding {UpdatedQueuesCount} queues to the user with Id {UserId}",
             usersQueues.Count,
             user.TelegramId);
-        return _telegramBotClient.SendTextMessageAsync(
-            new ChatId(user.TelegramId),
-            messageText.ToString(),
-            parseMode: ParseMode.Html);
+        return SendTextMessageOrDeleteUserIfBlockedAsync(user, messageText.ToString(), ParseMode.Html);
     }
 
     private async Task HandleStartCommand(long userId)
     {
-        _logger.LogInformation("User with Id {userId} requested to start receiving updates", userId);
+        _logger.LogInformation("User with Id {UserId} requested to start receiving updates", userId);
         var existingUser = await _dbContext.SubscribedUsers.FirstOrDefaultAsync(u => u.TelegramId == userId);
         if (existingUser is not null)
         {
-            _logger.LogInformation("User with Id {userId} is already in the database", userId);
+            _logger.LogInformation("User with Id {UserId} is already in the database", userId);
             await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), "Ви вже отримуєте оновлення графіка відключень");
             return;
         }
@@ -133,11 +129,11 @@ internal class TelegramService(
 
     private async Task HandleQueueCommand(long userId, string text)
     {
-        _logger.LogInformation("User with Id {userId} requested to change the queue number", userId);
+        _logger.LogInformation("User with Id {UserId} requested to change the queue number", userId);
         var parsed = int.TryParse(text.Trim(), out var queueNumber);
         if (!parsed || queueNumber < 0 || queueNumber > QueuesCount)
         {
-            _logger.LogInformation("User with Id {userId} sent a wrong queue number: {QueueNumberText}", userId, text);
+            _logger.LogInformation("User with Id {UserId} sent a wrong queue number: {QueueNumberText}", userId, text);
             await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), $"Номер черги має бути числом від 0 до {QueuesCount} (0 - щоб отримувати оновлення всіх черг)");
             return;
         }
@@ -145,7 +141,7 @@ internal class TelegramService(
         var user = await _dbContext.SubscribedUsers.FirstAsync(u => u.TelegramId == userId);
         if (user is null)
         {
-            _logger.LogWarning("User with Id {userId} is not present in the database", userId);
+            _logger.LogWarning("User with Id {UserId} is not present in the database", userId);
             await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), "Щоб почати отримувати оновлення, скористайтеся командою /start");
             return;
         }
@@ -166,7 +162,7 @@ internal class TelegramService(
 
     private async Task HandleStopCommand(long userId)
     {
-        _logger.LogInformation("User with Id {userId} requested to stop receiving updates", userId);
+        _logger.LogInformation("User with Id {UserId} requested to stop receiving updates", userId);
         var user = await _dbContext.SubscribedUsers.FirstOrDefaultAsync(u => u.TelegramId == userId);
         if (user is not null)
         {
@@ -177,15 +173,31 @@ internal class TelegramService(
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Failed to delete a user with Id {userId} from the database", userId);
+                _logger.LogError(e, "Failed to delete a user with Id {UserId} from the database", userId);
             }
         }
         else
         {
-            _logger.LogWarning("User with Id {userId} is not present in the database", userId);
+            _logger.LogWarning("User with Id {UserId} is not present in the database", userId);
         }
 
         await _telegramBotClient.SendTextMessageAsync(new ChatId(userId), "Тепер ви не будете отримувати оновлення графіка відключень");
+    }
+
+    private async Task SendTextMessageOrDeleteUserIfBlockedAsync(SubscribedUser user, string text, ParseMode parseMode)
+    {
+        try
+        {
+            await _telegramBotClient.SendTextMessageAsync(
+                new ChatId(user.TelegramId),
+                text,
+                parseMode: parseMode);
+        }
+        catch (Exception e) when (e.Message.Contains("Forbidden: bot was blocked by the user"))
+        {
+            _logger.LogWarning("Failed to send a message to used with Id {UserId} because the user blocked the bot. Deleting the user from the database", user.TelegramId);
+            _dbContext.SubscribedUsers.Remove(user);
+        }
     }
 
     private static string GetMessageFromQueues(List<Queue> usersQueues)
