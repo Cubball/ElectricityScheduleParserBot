@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ElectricitySchedule.Bot.Persistence;
 using ElectricitySchedule.Bot.Services;
 using Telegram.Bot;
+using ElectricitySchedule.Bot.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,8 @@ builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
 
 var app = builder.Build();
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.MapControllers();
 
