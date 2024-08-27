@@ -103,16 +103,15 @@ public class Function
         var dateOnly = DateOnly.ParseExact(dateText, DateFormat);
         for (int i = 1; i < children.Count; i++)
         {
-            ParseTableCell(children[i].InnerText, i, dateOnly, queues);
+            ParseTableCell(children[i].ChildNodes, i, dateOnly, queues);
         }
     }
 
-    private static void ParseTableCell(string text, int queueNumber, DateOnly dateOnly, List<QueuePayload> queues)
+    private static void ParseTableCell(HtmlNodeCollection elements, int queueNumber, DateOnly dateOnly, List<QueuePayload> queues)
     {
-        var lines = text
-            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-            .Where(l => l.Any(c => char.IsDigit(c)))
-            .Select(l => l.Trim());
+        var lines = elements
+            .Select(e => e.InnerText.Trim())
+            .Where(t => t.Any(char.IsDigit));
         var disconnectionTimes = string.Join(DisconnectionTimesSeparator, lines);
         if (!string.IsNullOrWhiteSpace(disconnectionTimes))
         {
